@@ -2953,12 +2953,16 @@ sysmalloc (INTERNAL_SIZE_T nb, mstate av)
 					mchunkptr arena_end = (mchunkptr) (((size_t) old_end & ~(ROUND_UP - 1)) + ROUND_UP);
 					size = (long) ((size_t) ((char *) arena_end - old_end) + pagesize); // add one page extra
 					size = ALIGN_UP (size, pagesize);
-
+					//if (size <= 0)
+					//	printf("[SYS-MALLOC] size <= 0\n");
 					brk = (char *) (MORECORE (size));
           LIBC_PROBE (memory_sbrk_more, 2, brk, size);
+					//printf("[SYS-MALLOC] old_end: %p arena_end: %p brk: %p size: 0x%lx\n",
+					//				old_end, (void *) arena_end, brk, size);
 
 					if (brk != (char *) (MORECORE_FAILURE) && brk == old_end) {
 						char *new_end = (char *) ((size_t) brk + size);
+						//printf("[SYS-MALLOC] brk succeeded! new_end: %p\n", new_end);
 						av->system_mem += (size_t) (new_end - old_end);
 
             mchunkptr filler = (mchunkptr) ((size_t) arena_end - (size_t) 0x10);
@@ -2975,6 +2979,11 @@ sysmalloc (INTERNAL_SIZE_T nb, mstate av)
 						check_malloced_chunk (av, old_top, prev_size);
 						check_malloced_chunk (av, filler, MINSIZE);
 
+						//printf("[SYS-MALLOC] old_top: %p prev_size: 0x%lx arena_end: %p remainder: %p filler: %p\n",
+						//				(void *) old_top, prev_size, (void *) arena_end, (void *) remainder, (void *) filler);
+						//printf("[SYS-MALLOC] av->top: %p chunksize(av->top): 0x%lx\n", (void *) av->top, chunksize(av->top));
+						//printf("[SYS-MALLOC] chunksize(old_top): 0x%lx nextchunk: %p\n",
+						//				chunksize(old_top), (void *) chunk_at_offset(old_top, chunksize(old_top)));
 						_int_free (av, old_top, 1);
 
 						(*hook)((void *) arena_end);
